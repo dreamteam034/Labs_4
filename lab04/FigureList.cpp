@@ -8,9 +8,14 @@ FigureList::FigureList()
 	list = NULL;
 }
 
-void FigureList::printList(wchar_t *path)
+void FigureList::printList(wchar_t *path, float Scale, Point cameraPos)
 {
 	ofstream out(path);
+
+	out << "Scale = " << Scale << ";" << endl;
+	out << "Camera_Pos = " << cameraPos.getX() << ", " << cameraPos.getY() << ";" << endl;
+	out << endl;
+
 	if (count > 0) {
 		for (int i = 0; i < count; i++) {
 			out << list[i];
@@ -18,25 +23,26 @@ void FigureList::printList(wchar_t *path)
 	}
 }
 
-void FigureList::readData(wchar_t * path)
+Camera FigureList::readData(wchar_t * path)
 {
 	ifstream in(path);
 	bool inFigureData = false;
+	Camera cameraPos;
 	Figure figure;
-	char c, type[12] = "", buffer[32] = "", bufVal[32] = "", secBufVal[32] = "", *bufPtr = type, debug[4096];
+	char c, buffer[32] = "", bufVal[32] = "", secBufVal[32] = "", *bufPtr = buffer, debug[4096];
 
 	while (in >> c) {
 		if (isalpha(c) || c == '_') {
 			*bufPtr++ = c;
 		}
-		else if (isdigit(c) || c == '-') {
-			*bufPtr++ = c;
+		else if (isdigit(c) || c == '-' || c == '.') {
+				*bufPtr++ = c;
 		}
 		else if (c == '{') {
 			*bufPtr = '\0';
 			//sprintf_s(debug, "Type: %s", buffer);
 			//OutputDebugStringA(debug);
-			figure.setType(type, sizeof(buffer));
+			figure.setType(buffer, sizeof(buffer));
 			bufPtr = buffer;
 		}
 		else if (c == '=') {
@@ -69,6 +75,12 @@ void FigureList::readData(wchar_t * path)
 			else if (strcmp(buffer, "Border_Style") == 0) {
 				figure.setBorderStyle(atoi(bufVal));
 			}
+			else if (strcmp(buffer, "Scale") == 0) {
+				cameraPos.Scale = (atof(bufVal));
+			}
+			else if (strcmp(buffer, "Camera_Pos") == 0) {
+				cameraPos.CameraPos = { atoi(bufVal), atoi(secBufVal) };
+			}
 
 			bufPtr = buffer;
 		}
@@ -77,9 +89,11 @@ void FigureList::readData(wchar_t * path)
 			//sprintf_s(debug, "Found figure: Type = %s; Start = %d, %d; End  = %d, %d; Fill = %u, %d; Border = %u, %d\n", 
 			//	"some", 0, 0, 0, 0, figure.getBackColor(), figure.getBackStyle(), figure.getBorderColor(), figure.getBorderStyle());
 			//OutputDebugStringA(debug);
-			bufPtr = type;
+			bufPtr = buffer;
 		}
 	}
+
+	return cameraPos;
 }
 
 bool FigureList::add(Figure figure)

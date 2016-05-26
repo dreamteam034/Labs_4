@@ -191,6 +191,8 @@ char *szToolById[] = {
 int iCurrentTool = -1;
 bool bDrawTemp = false;
 
+Camera camera;
+
 FigureList list;
 Point startMousePos = { 0, 0 }, currentMousePos = { 0, 0 };
 
@@ -244,7 +246,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 				if (GetOpenFileName(&ofn)) {
 					list.clean();
-					list.readData(fileName);
+					camera = list.readData(fileName);
+					Scale = camera.Scale;
 					RedrawWindow(hWnd, NULL, NULL, RDW_INVALIDATE);
 				}
 				break;
@@ -257,11 +260,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					ofn.lpstrFilter = _T("Text\0*.txt");
 
 					if (GetOpenFileName(&ofn)) {
-						list.printList(fileName);
+						list.printList(fileName, Scale, { 0 , 0 }); //	PUT CAMERA COORDINATES HERE!
 					}
 				}
 				else {
-					list.printList(fileName);
+					list.printList(fileName, Scale, { 0 , 0 }); //	PUT CAMERA COORDINATES HERE!
 				}
 				break;
 			case ID_FILE_SAVEAS:
@@ -272,7 +275,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				ofn.lpstrFilter = _T("Text\0*.txt");
 
 				if (GetOpenFileName(&ofn)) {
-					list.printList(fileName);
+					list.printList(fileName, Scale, { 0 , 0 }); //	PUT CAMERA COORDINATES HERE!
 				}
 
 				break;
@@ -417,7 +420,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			if (iCurrentTool >= 0)
 			{
 				// Let's create our figure
-				list.add({ startMousePos, currentMousePos, szToolById[iCurrentTool], rgbBackground, rgbBorder, styleBackground, styleBorder });
+				list.add({ { (int)(startMousePos.getX() / Scale), (int)(startMousePos.getY() / Scale) }, { (int)(currentMousePos.getX() / Scale), (int)(currentMousePos.getY() / Scale) }, szToolById[iCurrentTool], rgbBackground, rgbBorder, styleBackground, styleBorder });
 				InvalidateRect(hWnd, NULL, TRUE);
 			}
 			else
