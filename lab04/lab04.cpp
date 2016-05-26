@@ -183,7 +183,7 @@ void processInputFile(char *path) {
 
 char *szToolById[] = {
 	"line",
-	"circle",
+	"ellipse",
 	"rectangle",
 	"rectangle_rounded"
 };
@@ -194,7 +194,7 @@ bool bDrawTemp = false;
 FigureList list;
 Point startMousePos = { 0, 0 }, currentMousePos = { 0, 0 };
 
-DWORD rgbBackground = RGB(0, 0, 0);
+DWORD rgbBackground = RGB(255, 255, 255);
 DWORD rgbBorder = RGB(0, 0, 0);
 
 int styleBackground = -1;
@@ -216,7 +216,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	POINT oldMousePos = { 0, 0 }, newMousePos = { 0, 0 };
 	BOOL LBTisDown = false;
 	OPENFILENAME ofn = { 0 };
-	TCHAR fileName[128];
+	TCHAR fileName[128] = _T("file");
 	bool saveFirstTime = true;
 
 	wchar_t buffer[64];
@@ -254,7 +254,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					ofn.hwndOwner = hWnd;
 					ofn.lpstrFile = fileName;
 					ofn.nMaxFile = sizeof(fileName);
-					ofn.lpstrFilter = _T("Text\0*.txt");
+					ofn.lpstrFilter = _T(".txt\0");
 
 					if (GetOpenFileName(&ofn)) {
 						list.printList(fileName);
@@ -269,9 +269,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				ofn.hwndOwner = hWnd;
 				ofn.lpstrFile = fileName;
 				ofn.nMaxFile = sizeof(fileName);
-				ofn.lpstrFilter = _T("Text\0*.txt");
+				ofn.lpstrFilter = _T(".txt\0");
 
-				if (GetOpenFileName(&ofn)) {
+				if (GetSaveFileName(&ofn)) {
 					list.printList(fileName);
 				}
 
@@ -285,7 +285,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			case IDM_TOOLS_LINE:
 				iCurrentTool = 0;
 				break;
-			case IDM_TOOLS_CIRCLE:
+			case IDM_TOOLS_ELLIPSE:
 				iCurrentTool = 1;
 				break;
 			case IDM_TOOLS_RECTANGLE:
@@ -320,6 +320,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				break;
 			case IDM_BORDER_DASHDOTDOTTED:
 				styleBorder = PS_DASHDOTDOT;
+				break;
+			case IDM_BACKGROUND_DEFAULT:
+				styleBackground = -1;
 				break;
 			case IDM_BACKGROUND_HORIZONTAL:
 				styleBackground = HS_HORIZONTAL;
@@ -370,7 +373,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			//	SetViewportExtEx(hdc, Scale, Scale, nullptr);
 			//	SetViewportExtEx(hMemDC, Scale, Scale, nullptr);
 
-			PatBlt(hMemDC, 0, 0, 1920, 1200, WHITENESS);
+			PatBlt(hMemDC, 0, 0, 19200, 1200, WHITENESS);
 
 			list.drawList(hMemDC, Scale);
 
@@ -380,7 +383,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				TempFigure.draw(hMemDC, 1);
 			}
 
-			BitBlt(hdc, 0, 0, 1920, 1200, hMemDC, 0, 0, SRCCOPY);
+			BitBlt(hdc, 0, 0, 19200, 12000, hMemDC, 0, 0, SRCCOPY);
 			SelectObject(hMemDC, oldBmp);
 			DeleteObject(hScreen);
 			DeleteDC(hMemDC);
@@ -388,7 +391,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             EndPaint(hWnd, &ps);
         }
         break;
-	case 0x0014:
+	case WM_ERASEBKGND:
 		break;
     case WM_DESTROY:
         PostQuitMessage(0);
@@ -417,7 +420,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			if (iCurrentTool >= 0)
 			{
 				// Let's create our figure
-				list.add({ startMousePos, currentMousePos, szToolById[iCurrentTool], rgbBackground, rgbBorder, styleBackground, styleBorder });
+				list.add({ startMousePos, currentMousePos , szToolById[iCurrentTool], rgbBackground, rgbBorder, styleBackground, styleBorder });
 				InvalidateRect(hWnd, NULL, TRUE);
 			}
 			else

@@ -1,0 +1,32 @@
+line {
+A = 351, 298;
+B = 625, 502;
+Fill_Color = 0;
+Border_Color = 0;
+Fill_Style = -1;
+Border_Style = 0;
+}
+
+line {
+A = 483, 569;
+B = 851, 295;
+Fill_Color = 0;
+Border_Color = 0;
+Fill_Style = -1;
+Border_Style = 0;
+}
+
+line {
+A = 514, 237;
+B = 1000, 507;
+Fill_Color = 0;
+Border_Color = 0;
+Fill_Style = -1;
+Border_Style = 0;
+}
+
+line {
+A = 1021, 335;
+B = 600, 222;
+
+
