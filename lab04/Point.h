@@ -5,24 +5,24 @@
 
 using namespace std; 
 
-class Point
+class CPoint
 {
 private: 
 	int x, y;
 public:
-	Point();
-	Point(int x, int y);
+	CPoint();
+	CPoint(int x, int y);
 
-	Point operator+ (const Point A);
-	Point operator- (const Point A);
+	CPoint operator+ (const CPoint A);
+	CPoint operator- (const CPoint A);
 
-	int getX();
-	int getY();
-	Point get();
+	int GetX();
+	int GetY();
+	CPoint Get();
 
-	friend istream& operator>> (istream& Stream, Point& point);
-	friend ostream& operator<< (ostream& Stream, const Point& point);
+	friend istream& operator>> (istream& Stream, CPoint& point);
+	friend ostream& operator<< (ostream& Stream, const CPoint& point);
 
-	~Point();
+	~CPoint();
 };
 

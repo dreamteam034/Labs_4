@@ -2,10 +2,10 @@
 #include "Figure.h"
 #include "Point.h"
 
-Figure::Figure()
+CFigure::CFigure()
 {
-	start = Point( NULL, NULL ); 
-	end = Point ( NULL, NULL );
+	start = CPoint( NULL, NULL ); 
+	end = CPoint ( NULL, NULL );
 	type = NULL;
 	backgroundColor = RGB(0, 0, 0);
 	borderColor = RGB(0, 0, 0);
@@ -13,7 +13,7 @@ Figure::Figure()
 	borderStyle = PS_SOLID;
 }
 
-Figure::Figure(static Point start, static Point end, static char * type) {
+CFigure::CFigure(static CPoint start, static CPoint end, static char * type) {
 	this->start = start;
 	this->end = end;
 	this->type = type;
@@ -23,7 +23,7 @@ Figure::Figure(static Point start, static Point end, static char * type) {
 	borderStyle = PS_SOLID;
 }
 
-Figure::Figure(static Point start, static Point end, static char * type, static unsigned backgroundColor, static unsigned borderColor, static int backgroundStyle, static int borderStyle)
+CFigure::CFigure(static CPoint start, static CPoint end, static char * type, static unsigned backgroundColor, static unsigned borderColor, static int backgroundStyle, static int borderStyle)
 {
 	this->start = start;
 	this->end = end;
@@ -34,43 +34,43 @@ Figure::Figure(static Point start, static Point end, static char * type, static 
 	this->borderStyle = borderStyle;
 }
 
-void Figure::setType(static char * type, int size)
+void CFigure::setType(static char * type, int size)
 {
 	this->type = (char*)malloc(size);
 	strcpy_s(this->type, size, type); 
 }
 
-void Figure::setStart(Point point)
+void CFigure::setStart(CPoint point)
 {
 	start = point;
 }
 
-void Figure::setEnd(Point point)
+void CFigure::setEnd(CPoint point)
 {
 	end = point;
 }
 
-void Figure::setBackColor(unsigned backgroundColor)
+void CFigure::setBackColor(unsigned backgroundColor)
 {
 	this->backgroundColor = backgroundColor;
 }
 
-void Figure::setBackStyle(int backgroundStyle)
+void CFigure::setBackStyle(int backgroundStyle)
 {
 	this->backgroundStyle = backgroundStyle;
 }
 
-void Figure::setBorderColor(unsigned borderColor)
+void CFigure::setBorderColor(unsigned borderColor)
 {
 	this->borderColor = borderColor;
 }
 
-void Figure::setBorderStyle(int borderStyle)
+void CFigure::setBorderStyle(int borderStyle)
 {
 	this->borderStyle = borderStyle;
 }
 
-unsigned Figure::CheckCol(Point mousePos)
+unsigned CFigure::CheckCol(CPoint mousePos)
 {
 	if (strcmp(type, "circle") == 0) {
 		
@@ -84,7 +84,7 @@ unsigned Figure::CheckCol(Point mousePos)
 	return -1;
 }
 
-BOOL Figure::draw(static HDC hdc, static float Scale)
+BOOL CFigure::Draw(static HDC hdc, static float Scale)
 {
 	BOOL tmp = true;
 	wchar_t buffer[64];
@@ -102,20 +102,20 @@ BOOL Figure::draw(static HDC hdc, static float Scale)
 		SelectObject(hdc, hbr);
 
 	if (strcmp(type, "line") == 0) {
-		tmp = MoveToEx(hdc, start.getX() * Scale, start.getY() * Scale, NULL);
+		tmp = MoveToEx(hdc, start.GetX() * Scale, start.GetY() * Scale, NULL);
 		if (!tmp)
 			return tmp;
-		tmp = LineTo(hdc, end.getX() * Scale, end.getY() * Scale);
+		tmp = LineTo(hdc, end.GetX() * Scale, end.GetY() * Scale);
 	}
 	else if (strcmp(type, "rectangle") == 0) {
-		tmp = Rectangle(hdc, start.getX() * Scale, start.getY() * Scale, end.getX() * Scale, end.getY() * Scale);
+		tmp = Rectangle(hdc, start.GetX() * Scale, start.GetY() * Scale, end.GetX() * Scale, end.GetY() * Scale);
 	}
 	else if (strcmp(type, "rectangle_rounded") == 0) {
-		tmp = RoundRect(hdc, start.getX() * Scale, start.getY()* Scale, end.getX() * Scale, end.getY() * Scale, 10, 10);
+		tmp = RoundRect(hdc, start.GetX() * Scale, start.GetY()* Scale, end.GetX() * Scale, end.GetY() * Scale, 10, 10);
 
 	}
 	else if (strcmp(type, "ellipse") == 0) {
-		tmp = Ellipse(hdc, start.getX() * Scale, start.getY()* Scale, end.getX() * Scale, end.getY() * Scale);
+		tmp = Ellipse(hdc, start.GetX() * Scale, start.GetY()* Scale, end.GetX() * Scale, end.GetY() * Scale);
 	}
 
 	DeleteObject(hp);
@@ -124,20 +124,20 @@ BOOL Figure::draw(static HDC hdc, static float Scale)
 	return tmp;
 }
 
-void Figure::move(static Point oldMousePos, static Point newMousePos)
+void CFigure::move(static CPoint oldMousePos, static CPoint newMousePos)
 {
-	Point mouseDelta = newMousePos - oldMousePos;
+	CPoint mouseDelta = newMousePos - oldMousePos;
 	start = start + mouseDelta;
 	end = end + mouseDelta;
 }
 
 
-void Figure::setPosInList(unsigned int value)
+void CFigure::setPosInList(unsigned int value)
 {
 	posInList = value;
 }
 
-unsigned int Figure::getPosInList()
+unsigned int CFigure::getPosInList()
 {
 	return posInList;
 }
@@ -159,31 +159,31 @@ Point Figure::getEnd()
 }
 */
 
-unsigned Figure::getBackColor()
+unsigned CFigure::getBackColor()
 {
 	return backgroundColor;
 }
 
-int Figure::getBackStyle()
+int CFigure::getBackStyle()
 {
 	return backgroundStyle;
 }
 
-unsigned Figure::getBorderColor()
+unsigned CFigure::getBorderColor()
 {
 	return borderColor;
 }
 
-int Figure::getBorderStyle()
+int CFigure::getBorderStyle()
 {
 	return borderStyle;
 }
 
-Figure::~Figure()
+CFigure::~CFigure()
 {
 }
 
-ostream & operator<<(ostream & Stream, const Figure & figure)
+ostream & operator<<(ostream & Stream, const CFigure & figure)
 {
 	Stream << figure.type << " {" << endl;
 	Stream << "A = " << figure.start << ";\n" << "B = " << figure.end << ";" << endl;

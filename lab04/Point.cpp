@@ -3,52 +3,52 @@
 
 #include <iostream>
 
-Point::Point()
+CPoint::CPoint()
 {
 	x = NULL;
 	y = NULL;
 }
 
-Point::Point(int x, int y) {
+CPoint::CPoint(int x, int y) {
 	this->x = x;
 	this->y = y;
 }
 
-Point Point::operator+(const Point A) {
-	return Point(x + A.x, y + A.y);
+CPoint CPoint::operator+(const CPoint A) {
+	return CPoint(x + A.x, y + A.y);
 }
 
-Point Point::operator-(const Point A)
+CPoint CPoint::operator-(const CPoint A)
 {
-	return Point(x - A.x, y - A.y);
+	return CPoint(x - A.x, y - A.y);
 }
 
-int Point::getX()
+int CPoint::GetX()
 {
 	return x;
 }
 
-int Point::getY()
+int CPoint::GetY()
 {
 	return y;
 }
 
-Point Point::get()
+CPoint CPoint::Get()
 {
-	return Point(x, y);
+	return CPoint(x, y);
 }
 
-Point::~Point()
+CPoint::~CPoint()
 {
 }
 
-istream & operator>>(istream & Stream, Point & point)
+istream & operator>>(istream & Stream, CPoint & point)
 {
 	Stream >> point.x >> point.y;
 	return Stream;
 }
 
-ostream & operator<<(ostream & Stream, const Point & point)
+ostream & operator<<(ostream & Stream, const CPoint & point)
 {
 	Stream << point.x << ", " << point.y;
 	return Stream;
