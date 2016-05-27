@@ -92,14 +92,14 @@ BOOL Figure::draw(static HDC hdc, static float Scale)
 	HPEN hp = CreatePen(borderStyle, 0, borderColor);
 	HBRUSH hbr = CreateHatchBrush(backgroundStyle, backgroundColor);
 
-
-
 	SelectObject(hdc, hp);
-	SelectObject(hdc, hbr);
-	
 
-	SetDCPenColor(hdc, RGB(0, 0, 255));
-	SetDCBrushColor(hdc, RGB(255, 0, 0));
+	if (backgroundStyle == -1) {
+		SetDCBrushColor(hdc, backgroundColor);
+		SelectObject(hdc, GetStockObject(DC_BRUSH));
+	}
+	else
+		SelectObject(hdc, hbr);
 
 	if (strcmp(type, "line") == 0) {
 		tmp = MoveToEx(hdc, start.getX() * Scale, start.getY() * Scale, NULL);
@@ -110,7 +110,11 @@ BOOL Figure::draw(static HDC hdc, static float Scale)
 	else if (strcmp(type, "rectangle") == 0) {
 		tmp = Rectangle(hdc, start.getX() * Scale, start.getY() * Scale, end.getX() * Scale, end.getY() * Scale);
 	}
-	else if (strcmp(type, "circle") == 0) {
+	else if (strcmp(type, "rectangle_rounded") == 0) {
+		tmp = RoundRect(hdc, start.getX() * Scale, start.getY()* Scale, end.getX() * Scale, end.getY() * Scale, 10, 10);
+
+	}
+	else if (strcmp(type, "ellipse") == 0) {
 		tmp = Ellipse(hdc, start.getX() * Scale, start.getY()* Scale, end.getX() * Scale, end.getY() * Scale);
 	}
 

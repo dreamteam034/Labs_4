@@ -116,7 +116,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
    hInst = hInstance; // Store instance handle in our global variable
 
-   HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
+   HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW | WS_VSCROLL | WS_HSCROLL,
       CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
 
    if (!hWnd)
@@ -134,7 +134,7 @@ void processInputFile(char *path) {
 	const unsigned int bufferLength = 32, typeLength = 16, valueLength = 8, maxLength = 9;
 	char buffer[bufferLength], *bufferPtr = buffer, c, type[typeLength], c_value[valueLength];
 	int tmp;
-	bool onStart = true; //	Ìû òîëüêî íà÷àëè ñ÷èòûâàòü èíôîðìàöèþ î ôèãóðå 
+	bool onStart = true; //	ÃŒÃ» Ã²Ã®Ã«Ã¼ÃªÃ® Ã­Ã Ã·Ã Ã«Ã¨ Ã±Ã·Ã¨Ã²Ã»Ã¢Ã Ã²Ã¼ Ã¨Ã­Ã´Ã®Ã°Ã¬Ã Ã¶Ã¨Ã¾ Ã® Ã´Ã¨Ã£Ã³Ã°Ã¥ 
 	ifstream in("input.txt");
 
 	while (in.eof()) {
@@ -183,7 +183,7 @@ void processInputFile(char *path) {
 
 char *szToolById[] = {
 	"line",
-	"circle",
+	"ellipse",
 	"rectangle",
 	"rectangle_rounded"
 };
@@ -196,7 +196,7 @@ Camera camera;
 FigureList list;
 Point startMousePos = { 0, 0 }, currentMousePos = { 0, 0 };
 
-DWORD rgbBackground = RGB(0, 0, 0);
+DWORD rgbBackground = RGB(255, 255, 255);
 DWORD rgbBorder = RGB(0, 0, 0);
 
 int styleBackground = -1;
@@ -218,8 +218,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	POINT oldMousePos = { 0, 0 }, newMousePos = { 0, 0 };
 	BOOL LBTisDown = false;
 	OPENFILENAME ofn = { 0 };
-	TCHAR fileName[128];
+	TCHAR fileName[128] = _T("file");
 	bool saveFirstTime = true;
+
+	static int cxChar, cxCaps, cyChar, cxClient, cyClient, iMaxWidth,
+		iVscrollPos, iVscrollMax, iHscrollPos, iHscrollMax;
+
 
 	wchar_t buffer[64];
     switch (message)
@@ -257,7 +261,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					ofn.hwndOwner = hWnd;
 					ofn.lpstrFile = fileName;
 					ofn.nMaxFile = sizeof(fileName);
-					ofn.lpstrFilter = _T("Text\0*.txt");
+					ofn.lpstrFilter = _T(".txt\0");
 
 					if (GetOpenFileName(&ofn)) {
 						list.printList(fileName, Scale, { 0 , 0 }); //	PUT CAMERA COORDINATES HERE!
@@ -272,7 +276,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				ofn.hwndOwner = hWnd;
 				ofn.lpstrFile = fileName;
 				ofn.nMaxFile = sizeof(fileName);
-				ofn.lpstrFilter = _T("Text\0*.txt");
+				ofn.lpstrFilter = _T(".txt\0");
+
+				if (GetSaveFileName(&ofn)) {
+					list.printList(fileName);
+				}
 
 				if (GetOpenFileName(&ofn)) {
 					list.printList(fileName, Scale, { 0 , 0 }); //	PUT CAMERA COORDINATES HERE!
@@ -288,7 +296,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			case IDM_TOOLS_LINE:
 				iCurrentTool = 0;
 				break;
-			case IDM_TOOLS_CIRCLE:
+			case IDM_TOOLS_ELLIPSE:
 				iCurrentTool = 1;
 				break;
 			case IDM_TOOLS_RECTANGLE:
@@ -323,6 +331,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				break;
 			case IDM_BORDER_DASHDOTDOTTED:
 				styleBorder = PS_DASHDOTDOT;
+				break;
+			case IDM_BACKGROUND_DEFAULT:
+				styleBackground = -1;
 				break;
 			case IDM_BACKGROUND_HORIZONTAL:
 				styleBackground = HS_HORIZONTAL;
@@ -360,11 +371,56 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         }
 		
         break;
+	case WM_VSCROLL:
+		switch (LOWORD(wParam))
+		{
+		case SB_LINEUP:
+			iVscrollPos -= 1;
+			break;
+		case SB_LINEDOWN:
+			iVscrollPos += 1;
+			break;
+		case SB_THUMBPOSITION:
+			iVscrollPos = HIWORD(wParam);
+			break;
+		default:
+			break;
+		}
+
+		if (iVscrollPos != GetScrollPos(hWnd, SB_VERT))
+		{
+			SetScrollPos(hWnd, SB_VERT, iVscrollPos , TRUE);
+			InvalidateRect(hWnd, NULL, TRUE);
+		}
+
+		return 0;
+	case WM_HSCROLL:
+		switch (LOWORD(wParam))
+		{
+		case SB_LINEUP:
+			iHscrollPos -= 1;
+			break;
+		case SB_LINEDOWN:
+			iHscrollPos += 1;
+			break;
+		case SB_THUMBPOSITION:
+			iHscrollPos = HIWORD(wParam);
+			break;
+		default:
+			break;
+		}
+
+		if (iHscrollPos != GetScrollPos(hWnd, SB_HORZ))
+		{
+			SetScrollPos(hWnd, SB_HORZ, iHscrollPos, TRUE);
+			InvalidateRect(hWnd, NULL, TRUE);
+		}
+		return 0;
     case WM_PAINT:
         {
 			PAINTSTRUCT ps;
 			HDC hdc = BeginPaint(hWnd, &ps);
-            // TODO: Add any drawing code that uses hdc here...
+            		// TODO: Add any drawing code that uses hdc here...
 			
 			HDC hMemDC = CreateCompatibleDC(hdc);
 			HBITMAP hScreen = CreateCompatibleBitmap(hdc, 1920, 1080);
@@ -373,17 +429,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			//	SetViewportExtEx(hdc, Scale, Scale, nullptr);
 			//	SetViewportExtEx(hMemDC, Scale, Scale, nullptr);
 
-			PatBlt(hMemDC, 0, 0, 1920, 1200, WHITENESS);
+			PatBlt(hMemDC, 0, 0, 1920, 1080, WHITENESS);
 
 			list.drawList(hMemDC, Scale);
 
 			if (bDrawTemp)
 			{
-				Figure TempFigure(startMousePos, currentMousePos, szToolById[iCurrentTool], rgbBackground, rgbBorder, styleBackground, styleBorder);
-				TempFigure.draw(hMemDC, 1);
+				Figure TempFigure(
+					{ (int)((startMousePos.getX() / Scale) + 2 * iHscrollPos),  (int)((startMousePos.getY() / Scale) + 2 * iVscrollPos) },
+					{ (int)((currentMousePos.getX() / Scale) + 2 * iHscrollPos), (int)((currentMousePos.getY() / Scale) + 2 * iVscrollPos) },
+					szToolById[iCurrentTool], rgbBackground, rgbBorder, styleBackground, styleBorder);
+				TempFigure.draw(hMemDC, Scale);
 			}
 
-			BitBlt(hdc, 0, 0, 1920, 1200, hMemDC, 0, 0, SRCCOPY);
+			BitBlt(hdc, 0, 0, 1920, 1080, hMemDC, 2 * iHscrollPos * Scale, 2 * iVscrollPos * Scale, SRCCOPY);
 			SelectObject(hMemDC, oldBmp);
 			DeleteObject(hScreen);
 			DeleteDC(hMemDC);
@@ -391,7 +450,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             EndPaint(hWnd, &ps);
         }
         break;
-	case 0x0014:
+	case WM_ERASEBKGND:
 		break;
     case WM_DESTROY:
         PostQuitMessage(0);
@@ -420,7 +479,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			if (iCurrentTool >= 0)
 			{
 				// Let's create our figure
-				list.add({ { (int)(startMousePos.getX() / Scale), (int)(startMousePos.getY() / Scale) }, { (int)(currentMousePos.getX() / Scale), (int)(currentMousePos.getY() / Scale) }, szToolById[iCurrentTool], rgbBackground, rgbBorder, styleBackground, styleBorder });
+
+				list.add({
+					{ (int)((startMousePos.getX() / Scale) + 2 * iHscrollPos),  (int)((startMousePos.getY() / Scale) + 2 * iVscrollPos) },
+					{ (int)((currentMousePos.getX() / Scale) + 2 * iHscrollPos), (int)((currentMousePos.getY() / Scale) + 2 * iVscrollPos) },
+					szToolById[iCurrentTool], rgbBackground, rgbBorder, styleBackground, styleBorder 
+				});
+
 				InvalidateRect(hWnd, NULL, TRUE);
 			}
 			else
