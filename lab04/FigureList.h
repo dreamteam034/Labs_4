@@ -7,6 +7,11 @@
 
 using namespace std;
 
+struct Camera {
+	Point CameraPos = { 0 , 0 };
+	float Scale = 1.0;
+};
+
 class FigureList
 {
 private:
@@ -15,7 +20,7 @@ private:
 public:
 	FigureList();
 
-	void printList(wchar_t *path);
+	void printList(wchar_t *path, float Scale, Point cameraPos);
 
 	//
 	//	Point start, end;
@@ -24,7 +29,7 @@ public:
 	//	char *type = "";
 	//
 
-	void readData(wchar_t *path);
+	Camera readData(wchar_t *path);
 
 	bool checkClick(Point mousePos) {
 		
