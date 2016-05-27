@@ -134,7 +134,7 @@ void processInputFile(char *path) {
 	const unsigned int bufferLength = 32, typeLength = 16, valueLength = 8, maxLength = 9;
 	char buffer[bufferLength], *bufferPtr = buffer, c, type[typeLength], c_value[valueLength];
 	int tmp;
-	bool onStart = true; //	Мы только начали считывать информацию о фигуре 
+	bool onStart = true; //	ГЊГ» ГІГ®Г«ГјГЄГ® Г­Г Г·Г Г«ГЁ Г±Г·ГЁГІГ»ГўГ ГІГј ГЁГ­ГґГ®Г°Г¬Г Г¶ГЁГѕ Г® ГґГЁГЈГіГ°ГҐ 
 	ifstream in("input.txt");
 
 	while (in.eof()) {
@@ -278,13 +278,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				ofn.nMaxFile = sizeof(fileName);
 				ofn.lpstrFilter = _T(".txt\0");
 
-<<<<<<< HEAD
 				if (GetSaveFileName(&ofn)) {
 					list.printList(fileName);
-=======
+				}
+
 				if (GetOpenFileName(&ofn)) {
 					list.printList(fileName, Scale, { 0 , 0 }); //	PUT CAMERA COORDINATES HERE!
->>>>>>> master
 				}
 
 				break;
@@ -421,7 +420,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         {
 			PAINTSTRUCT ps;
 			HDC hdc = BeginPaint(hWnd, &ps);
-            // TODO: Add any drawing code that uses hdc here...
+            		// TODO: Add any drawing code that uses hdc here...
 			
 			HDC hMemDC = CreateCompatibleDC(hdc);
 			HBITMAP hScreen = CreateCompatibleBitmap(hdc, 1920, 1080);
@@ -480,16 +479,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			if (iCurrentTool >= 0)
 			{
 				// Let's create our figure
-<<<<<<< HEAD
+
 				list.add({
 					{ (int)((startMousePos.getX() / Scale) + 2 * iHscrollPos),  (int)((startMousePos.getY() / Scale) + 2 * iVscrollPos) },
 					{ (int)((currentMousePos.getX() / Scale) + 2 * iHscrollPos), (int)((currentMousePos.getY() / Scale) + 2 * iVscrollPos) },
 					szToolById[iCurrentTool], rgbBackground, rgbBorder, styleBackground, styleBorder 
 				});
 
-=======
-				list.add({ { (int)(startMousePos.getX() / Scale), (int)(startMousePos.getY() / Scale) }, { (int)(currentMousePos.getX() / Scale), (int)(currentMousePos.getY() / Scale) }, szToolById[iCurrentTool], rgbBackground, rgbBorder, styleBackground, styleBorder });
->>>>>>> master
 				InvalidateRect(hWnd, NULL, TRUE);
 			}
 			else
