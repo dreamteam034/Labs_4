@@ -116,7 +116,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
    hInst = hInstance; // Store instance handle in our global variable
 
-   HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
+   HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW | WS_VSCROLL | WS_HSCROLL,
       CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
 
    if (!hWnd)
@@ -218,6 +218,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	OPENFILENAME ofn = { 0 };
 	TCHAR fileName[128] = _T("file");
 	bool saveFirstTime = true;
+
+	static int cxChar, cxCaps, cyChar, cxClient, cyClient, iMaxWidth,
+		iVscrollPos, iVscrollMax, iHscrollPos, iHscrollMax;
+
 
 	wchar_t buffer[64];
     switch (message)
@@ -360,6 +364,51 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         }
 		
         break;
+	case WM_VSCROLL:
+		switch (LOWORD(wParam))
+		{
+		case SB_LINEUP:
+			iVscrollPos -= 1;
+			break;
+		case SB_LINEDOWN:
+			iVscrollPos += 1;
+			break;
+		case SB_THUMBPOSITION:
+			iVscrollPos = HIWORD(wParam);
+			break;
+		default:
+			break;
+		}
+
+		if (iVscrollPos != GetScrollPos(hWnd, SB_VERT))
+		{
+			SetScrollPos(hWnd, SB_VERT, iVscrollPos , TRUE);
+			InvalidateRect(hWnd, NULL, TRUE);
+		}
+
+		return 0;
+	case WM_HSCROLL:
+		switch (LOWORD(wParam))
+		{
+		case SB_LINEUP:
+			iHscrollPos -= 1;
+			break;
+		case SB_LINEDOWN:
+			iHscrollPos += 1;
+			break;
+		case SB_THUMBPOSITION:
+			iHscrollPos = HIWORD(wParam);
+			break;
+		default:
+			break;
+		}
+
+		if (iHscrollPos != GetScrollPos(hWnd, SB_HORZ))
+		{
+			SetScrollPos(hWnd, SB_HORZ, iHscrollPos, TRUE);
+			InvalidateRect(hWnd, NULL, TRUE);
+		}
+		return 0;
     case WM_PAINT:
         {
 			PAINTSTRUCT ps;
@@ -373,17 +422,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			//	SetViewportExtEx(hdc, Scale, Scale, nullptr);
 			//	SetViewportExtEx(hMemDC, Scale, Scale, nullptr);
 
-			PatBlt(hMemDC, 0, 0, 19200, 1200, WHITENESS);
+			PatBlt(hMemDC, 0, 0, 1920, 1080, WHITENESS);
 
 			list.drawList(hMemDC, Scale);
 
 			if (bDrawTemp)
 			{
-				Figure TempFigure(startMousePos, currentMousePos, szToolById[iCurrentTool], rgbBackground, rgbBorder, styleBackground, styleBorder);
-				TempFigure.draw(hMemDC, 1);
+				Figure TempFigure(
+					{ (int)((startMousePos.getX() / Scale) + 2 * iHscrollPos),  (int)((startMousePos.getY() / Scale) + 2 * iVscrollPos) },
+					{ (int)((currentMousePos.getX() / Scale) + 2 * iHscrollPos), (int)((currentMousePos.getY() / Scale) + 2 * iVscrollPos) },
+					szToolById[iCurrentTool], rgbBackground, rgbBorder, styleBackground, styleBorder);
+				TempFigure.draw(hMemDC, Scale);
 			}
 
-			BitBlt(hdc, 0, 0, 19200, 12000, hMemDC, 0, 0, SRCCOPY);
+			BitBlt(hdc, 0, 0, 1920, 1080, hMemDC, 2 * iHscrollPos * Scale, 2 * iVscrollPos * Scale, SRCCOPY);
 			SelectObject(hMemDC, oldBmp);
 			DeleteObject(hScreen);
 			DeleteDC(hMemDC);
@@ -420,7 +472,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			if (iCurrentTool >= 0)
 			{
 				// Let's create our figure
-				list.add({ startMousePos, currentMousePos , szToolById[iCurrentTool], rgbBackground, rgbBorder, styleBackground, styleBorder });
+				list.add({
+					{ (int)((startMousePos.getX() / Scale) + 2 * iHscrollPos),  (int)((startMousePos.getY() / Scale) + 2 * iVscrollPos) },
+					{ (int)((currentMousePos.getX() / Scale) + 2 * iHscrollPos), (int)((currentMousePos.getY() / Scale) + 2 * iVscrollPos) },
+					szToolById[iCurrentTool], rgbBackground, rgbBorder, styleBackground, styleBorder 
+				});
+
 				InvalidateRect(hWnd, NULL, TRUE);
 			}
 			else
