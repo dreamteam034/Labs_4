@@ -15,7 +15,21 @@
 
 #define MAX_LOADSTRING 100
 
-float Scale = 1;
+// Workspace size
+#define WORKSPACE_WIDTH 1920
+#define WORKSPACE_HEIGHT 1080
+
+// Scrolling
+#define SCROLL_STEPS 100
+
+// Zooming
+#define ZOOM_STEP 0.1
+#define ZOOM_MAX 1.2
+#define ZOOM_MIN 0.8
+
+// Macros
+#define MOUSE_POS int((LOWORD(lParam) / Zoom) + 2 * iHscrollPos), int((HIWORD(lParam) / Zoom) + 2 * iVscrollPos)
+
 
 using namespace std;
 
@@ -191,16 +205,18 @@ char *szToolById[] = {
 int iCurrentTool = -1;
 bool bDrawTemp = false;
 
-Camera camera;
+float Zoom = 1;
 
-FigureList list;
-Point startMousePos = { 0, 0 }, currentMousePos = { 0, 0 };
+CCamera Camera;
+
+CFigureList List;
+CPoint StartMousePos = { 0, 0 }, EndMousePos = { 0, 0 };
 
 DWORD rgbBackground = RGB(255, 255, 255);
 DWORD rgbBorder = RGB(0, 0, 0);
 
-int styleBackground = -1;
-int styleBorder = 0;
+int iStyleBackground = -1;
+int iStyleBorder = 0;
 
 //
 //  FUNCTION: WndProc(HWND, UINT, WPARAM, LPARAM)
@@ -213,17 +229,53 @@ int styleBorder = 0;
 //
 //
 
+static int cxChar, cxCaps, cyChar, cxClient, cyClient, iMaxWidth,
+iVscrollPos, iVscrollMax, iHscrollPos, iHscrollMax;
+
+void SetZoom(HWND &hWnd, int iValue)
+{
+	Zoom = iValue;
+	if (Zoom > ZOOM_MAX)
+		Zoom = ZOOM_MAX;
+	else if (Zoom < ZOOM_MIN)
+		Zoom = ZOOM_MIN;
+
+	// Scrolls change size
+	SetScrollRange(hWnd, SB_VERT, 0, (Zoom - ZOOM_MIN) * 20, TRUE);
+	SetScrollRange(hWnd, SB_HORZ, 0, (Zoom - ZOOM_MIN) * 20, TRUE);
+
+	iVscrollPos = 0;
+	iHscrollPos = 0;
+
+	InvalidateRect(hWnd, NULL, TRUE);
+}
+
+void ChangeZoom(HWND &hWnd, int iValue)
+{
+	if (iValue != 0)
+		Zoom = Zoom + iValue * ZOOM_STEP;
+	else
+		Zoom = 1;
+
+	SetZoom(hWnd, iValue);
+}
+
+OPENFILENAME InitFileDialog(OPENFILENAME &fn, HWND &hWnd, TCHAR pwszFileName[])
+{
+	fn.lStructSize = sizeof(fn);
+	fn.hwndOwner = hWnd;
+	fn.lpstrFile = pwszFileName;
+	fn.nMaxFile = sizeof(pwszFileName);
+	fn.lpstrFilter = _T(".txt");
+
+	return fn;
+}
+
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	POINT oldMousePos = { 0, 0 }, newMousePos = { 0, 0 };
-	BOOL LBTisDown = false;
-	OPENFILENAME ofn = { 0 };
-	TCHAR fileName[128] = _T("file");
-	bool saveFirstTime = true;
-
-	static int cxChar, cxCaps, cyChar, cxClient, cyClient, iMaxWidth,
-		iVscrollPos, iVscrollMax, iHscrollPos, iHscrollMax;
-
+	OPENFILENAME fn = { 0 }; 
+	TCHAR pwszFileName[128] = _T("file");
+	bool bSaveFirstTime = true;
 
 	wchar_t buffer[64];
     switch (message)
@@ -238,53 +290,39 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
                 break;
 			case ID_FILE_NEW:
-				list.clean();
+				List.Clean();
 				RedrawWindow(hWnd, NULL, NULL, RDW_INVALIDATE);
 				break; 
 			case ID_FILE_OPEN:
-				ofn.lStructSize = sizeof(ofn);
-				ofn.hwndOwner = hWnd;
-				ofn.lpstrFile = fileName;
-				ofn.nMaxFile = sizeof(fileName);
-				ofn.lpstrFilter = _T("Text\0*.txt");
+				InitFileDialog(fn, hWnd, pwszFileName);
 
-				if (GetOpenFileName(&ofn)) {
-					list.clean();
-					camera = list.readData(fileName);
-					Scale = camera.Scale;
+				if (GetOpenFileName(&fn)) {
+					List.Clean();
+					Camera = List.ReadData(pwszFileName);
+					SetZoom(hWnd, Camera.Zoom);
 					RedrawWindow(hWnd, NULL, NULL, RDW_INVALIDATE);
 				}
 				break;
 			case ID_FILE_SAVE:
-				if (saveFirstTime) {
-					ofn.lStructSize = sizeof(ofn);
-					ofn.hwndOwner = hWnd;
-					ofn.lpstrFile = fileName;
-					ofn.nMaxFile = sizeof(fileName);
-					ofn.lpstrFilter = _T(".txt\0");
+				if (bSaveFirstTime) {
+					InitFileDialog(fn, hWnd, pwszFileName);
 
-					if (GetOpenFileName(&ofn)) {
-						list.printList(fileName, Scale, { 0 , 0 }); //	PUT CAMERA COORDINATES HERE!
-					}
-				}
-				else {
-					list.printList(fileName, Scale, { 0 , 0 }); //	PUT CAMERA COORDINATES HERE!
-				}
+					if (GetOpenFileName(&fn))
+						List.PrintList(pwszFileName, Zoom, { 0 , 0 }); //	PUT CAMERA COORDINATES HERE!
+				} 
+				else
+					List.PrintList(pwszFileName, Zoom, { 0 , 0 }); //	PUT CAMERA COORDINATES HERE!
+
 				break;
 			case ID_FILE_SAVEAS:
-				ofn.lStructSize = sizeof(ofn);
-				ofn.hwndOwner = hWnd;
-				ofn.lpstrFile = fileName;
-				ofn.nMaxFile = sizeof(fileName);
-				ofn.lpstrFilter = _T(".txt\0");
+				InitFileDialog(fn, hWnd, pwszFileName);
 
-				if (GetSaveFileName(&ofn)) {
-					list.printList(fileName);
-				}
+				//if (GetSaveFileName(&ofn)) {
+					//list.printList(fileName);
+				//}
 
-				if (GetOpenFileName(&ofn)) {
-					list.printList(fileName, Scale, { 0 , 0 }); //	PUT CAMERA COORDINATES HERE!
-				}
+				if (GetOpenFileName(&fn))
+					List.PrintList(pwszFileName, Zoom, { 0 , 0 }); //	PUT CAMERA COORDINATES HERE!
 
 				break;
             case IDM_EXIT:
@@ -318,52 +356,49 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					rgbBorder = cc.rgbResult;
 				break;
 			case IDM_BORDER_SOLID:
-				styleBorder = PS_SOLID;
+				iStyleBorder = PS_SOLID;
 				break;
 			case IDM_BORDER_DASHED:
-				styleBorder = PS_DASH;
+				iStyleBorder = PS_DASH;
 				break;
 			case IDM_BORDER_DOTTED:
-				styleBorder = PS_DOT;
+				iStyleBorder = PS_DOT;
 				break;
 			case IDM_BORDER_DASHDOTTED:
-				styleBorder = PS_DASHDOT;
+				iStyleBorder = PS_DASHDOT;
 				break;
 			case IDM_BORDER_DASHDOTDOTTED:
-				styleBorder = PS_DASHDOTDOT;
+				iStyleBorder = PS_DASHDOTDOT;
 				break;
 			case IDM_BACKGROUND_DEFAULT:
-				styleBackground = -1;
+				iStyleBackground = -1;
 				break;
 			case IDM_BACKGROUND_HORIZONTAL:
-				styleBackground = HS_HORIZONTAL;
+				iStyleBackground = HS_HORIZONTAL;
 				break;
 			case IDM_BACKGROUND_VERTICAL:
-				styleBackground = HS_VERTICAL;
+				iStyleBackground = HS_VERTICAL;
 				break;
 			case IDM_BACKGROUND_FDIAGONAL:
-				styleBackground = HS_FDIAGONAL;
+				iStyleBackground = HS_FDIAGONAL;
 				break;
 			case IDM_BACKGROUND_BDIAGONAL:
-				styleBackground = HS_BDIAGONAL;
+				iStyleBackground = HS_BDIAGONAL;
 				break;
 			case IDM_BACKGROUND_CROSS:
-				styleBackground = HS_CROSS;
+				iStyleBackground = HS_CROSS;
 				break;
 			case IDM_BACKGROUND_DIAGCROSS:
-				styleBackground = HS_DIAGCROSS;
+				iStyleBackground = HS_DIAGCROSS;
 				break;
-			case ID_ZOOM_ZOOMIN:
-				Scale = Scale + 0.1;
-				RedrawWindow(hWnd, NULL, NULL, RDW_INVALIDATE);
+			case IDM_ZOOM_ZOOMIN:
+				ChangeZoom(hWnd, 1);
 				break;
-			case ID_ZOOM_ZOOMOUT:
-				Scale = Scale - 0.1;
-				RedrawWindow(hWnd, NULL, NULL, RDW_INVALIDATE);
+			case IDM_ZOOM_ZOOMOUT:
+				ChangeZoom(hWnd, -1);
 				break;
-			case ID_ZOOM_SETDEFAULT:
-				Scale = 1;
-				RedrawWindow(hWnd, NULL, NULL, RDW_INVALIDATE);
+			case IDM_ZOOM_SETDEFAULT:
+				ChangeZoom(hWnd, 0);
 				break;
             default:
                 return DefWindowProc(hWnd, message, wParam, lParam);
@@ -397,10 +432,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_HSCROLL:
 		switch (LOWORD(wParam))
 		{
-		case SB_LINEUP:
+		case SB_LINELEFT:
 			iHscrollPos -= 1;
 			break;
-		case SB_LINEDOWN:
+		case SB_LINERIGHT:
 			iHscrollPos += 1;
 			break;
 		case SB_THUMBPOSITION:
@@ -420,29 +455,35 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         {
 			PAINTSTRUCT ps;
 			HDC hdc = BeginPaint(hWnd, &ps);
-            		// TODO: Add any drawing code that uses hdc here...
+            // TODO: Add any drawing code that uses hdc here...
 			
 			HDC hMemDC = CreateCompatibleDC(hdc);
-			HBITMAP hScreen = CreateCompatibleBitmap(hdc, 1920, 1080);
+			HBITMAP hScreen = CreateCompatibleBitmap(hdc, WORKSPACE_WIDTH, WORKSPACE_HEIGHT);
 			HBITMAP oldBmp = (HBITMAP)SelectObject(hMemDC, hScreen);
 
 			//	SetViewportExtEx(hdc, Scale, Scale, nullptr);
 			//	SetViewportExtEx(hMemDC, Scale, Scale, nullptr);
 
-			PatBlt(hMemDC, 0, 0, 1920, 1080, WHITENESS);
+			PatBlt(hMemDC, 0, 0, WORKSPACE_WIDTH, WORKSPACE_HEIGHT, WHITENESS);
 
-			list.drawList(hMemDC, Scale);
+			List.DrawList(hMemDC, Zoom);
 
 			if (bDrawTemp)
 			{
-				Figure TempFigure(
-					{ (int)((startMousePos.getX() / Scale) + 2 * iHscrollPos),  (int)((startMousePos.getY() / Scale) + 2 * iVscrollPos) },
-					{ (int)((currentMousePos.getX() / Scale) + 2 * iHscrollPos), (int)((currentMousePos.getY() / Scale) + 2 * iVscrollPos) },
-					szToolById[iCurrentTool], rgbBackground, rgbBorder, styleBackground, styleBorder);
-				TempFigure.draw(hMemDC, Scale);
+				CFigure TempFigure(
+					StartMousePos,
+					EndMousePos,
+					szToolById[iCurrentTool], 
+					rgbBackground, 
+					rgbBorder, 
+					iStyleBackground, 
+					iStyleBorder
+				);
+
+				TempFigure.Draw(hMemDC, Zoom);
 			}
 
-			BitBlt(hdc, 0, 0, 1920, 1080, hMemDC, 2 * iHscrollPos * Scale, 2 * iVscrollPos * Scale, SRCCOPY);
+			BitBlt(hdc, 0, 0, WORKSPACE_WIDTH, WORKSPACE_HEIGHT, hMemDC, 2 * iHscrollPos * Zoom, 2 * iVscrollPos * Zoom, SRCCOPY);
 			SelectObject(hMemDC, oldBmp);
 			DeleteObject(hScreen);
 			DeleteDC(hMemDC);
@@ -451,19 +492,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         }
         break;
 	case WM_ERASEBKGND:
+		// Fix for drawing
 		break;
     case WM_DESTROY:
         PostQuitMessage(0);
         break;
 	case WM_LBUTTONDOWN:
 		{
-			LBTisDown = true;
-			swprintf(buffer, _countof(buffer), L"%d\n", LBTisDown);
-			OutputDebugString(buffer);
-			GetCursorPos(&oldMousePos);
-			
-			RedrawWindow(hWnd, NULL, NULL, RDW_INVALIDATE);
-			startMousePos = { LOWORD(lParam), HIWORD(lParam) };
+			InvalidateRect(hWnd, NULL, TRUE);
+			StartMousePos = { MOUSE_POS };
 			if (iCurrentTool >= 0)
 			{
 				// Let's start temp drawing
@@ -480,10 +517,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			{
 				// Let's create our figure
 
-				list.add({
-					{ (int)((startMousePos.getX() / Scale) + 2 * iHscrollPos),  (int)((startMousePos.getY() / Scale) + 2 * iVscrollPos) },
-					{ (int)((currentMousePos.getX() / Scale) + 2 * iHscrollPos), (int)((currentMousePos.getY() / Scale) + 2 * iVscrollPos) },
-					szToolById[iCurrentTool], rgbBackground, rgbBorder, styleBackground, styleBorder 
+				List.Add({
+					StartMousePos,
+					EndMousePos,
+					szToolById[iCurrentTool],
+					rgbBackground,
+					rgbBorder,
+					iStyleBackground,
+					iStyleBorder
 				});
 
 				InvalidateRect(hWnd, NULL, TRUE);
@@ -491,7 +532,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			else
 			{
 				// Let's select figure
-				unsigned length = list.getLength() - 1;
+				unsigned length = List.GetLength() - 1;
 				for (unsigned i = length; i > 0; i--)
 				{
 					
@@ -501,7 +542,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 	case WM_MOUSEMOVE:
 		{
-			currentMousePos = { LOWORD(lParam), HIWORD(lParam) };
+			EndMousePos = { MOUSE_POS };
 			if (bDrawTemp && iCurrentTool >= 0)
 			{
 				// Let's redraw current figure
@@ -519,16 +560,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			switch (wParam)
 			{
 			case VK_OEM_PLUS:
-				if (GetAsyncKeyState(VK_CONTROL)) {
-					Scale = Scale + 0.1;
-					RedrawWindow(hWnd, NULL, NULL, RDW_INVALIDATE);
-				}
+				if (GetAsyncKeyState(VK_CONTROL))
+					ChangeZoom(hWnd, 1);
 				break;
 			case VK_OEM_MINUS:
-				if (GetAsyncKeyState(VK_CONTROL)) {
-					Scale = Scale - 0.1;
-					RedrawWindow(hWnd, NULL, NULL, RDW_INVALIDATE);
-				}
+				if (GetAsyncKeyState(VK_CONTROL))
+					ChangeZoom(hWnd, -1);
 				break;
 			case VK_DELETE:
 				

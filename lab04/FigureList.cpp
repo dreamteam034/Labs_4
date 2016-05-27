@@ -2,18 +2,18 @@
 #include "FigureList.h"
 
 
-FigureList::FigureList()
+CFigureList::CFigureList()
 {
 	count = 0;
 	list = NULL;
 }
 
-void FigureList::printList(wchar_t *path, float Scale, Point cameraPos)
+void CFigureList::PrintList(wchar_t *path, float Scale, CPoint cameraPos)
 {
 	ofstream out(path);
 
 	out << "Scale = " << Scale << ";" << endl;
-	out << "Camera_Pos = " << cameraPos.getX() << ", " << cameraPos.getY() << ";" << endl;
+	out << "Camera_Pos = " << cameraPos.GetX() << ", " << cameraPos.GetY() << ";" << endl;
 	out << endl;
 
 	if (count > 0) {
@@ -23,12 +23,12 @@ void FigureList::printList(wchar_t *path, float Scale, Point cameraPos)
 	}
 }
 
-Camera FigureList::readData(wchar_t * path)
+CCamera CFigureList::ReadData(wchar_t * path)
 {
 	ifstream in(path);
 	bool inFigureData = false;
-	Camera cameraPos;
-	Figure figure;
+	CCamera cameraPos;
+	CFigure figure;
 	char c, buffer[32] = "", bufVal[32] = "", secBufVal[32] = "", *bufPtr = buffer, debug[4096];
 
 	while (in >> c) {
@@ -76,7 +76,7 @@ Camera FigureList::readData(wchar_t * path)
 				figure.setBorderStyle(atoi(bufVal));
 			}
 			else if (strcmp(buffer, "Scale") == 0) {
-				cameraPos.Scale = (atof(bufVal));
+				cameraPos.Zoom = (atof(bufVal));
 			}
 			else if (strcmp(buffer, "Camera_Pos") == 0) {
 				cameraPos.CameraPos = { atoi(bufVal), atoi(secBufVal) };
@@ -85,7 +85,7 @@ Camera FigureList::readData(wchar_t * path)
 			bufPtr = buffer;
 		}
 		else if (c == '}') {
-			add(figure);
+			Add(figure);
 			//sprintf_s(debug, "Found figure: Type = %s; Start = %d, %d; End  = %d, %d; Fill = %u, %d; Border = %u, %d\n", 
 			//	"some", 0, 0, 0, 0, figure.getBackColor(), figure.getBackStyle(), figure.getBorderColor(), figure.getBorderStyle());
 			//OutputDebugStringA(debug);
@@ -96,25 +96,25 @@ Camera FigureList::readData(wchar_t * path)
 	return cameraPos;
 }
 
-bool FigureList::add(Figure figure)
+bool CFigureList::Add(CFigure figure)
 {
-	Figure * listPtr;
+	CFigure * listPtr;
 	count++;
-	listPtr = (Figure *)realloc(list, count * sizeof(Figure));
+	listPtr = (CFigure *)realloc(list, count * sizeof(CFigure));
 	list = listPtr; 
 	list[count - 1] = figure;
 	list[count - 1].setPosInList(count - 1);
 	return true;
 }
 
-void FigureList::drawList(HDC hdc, float Scale)
+void CFigureList::DrawList(HDC hdc, float Scale)
 {
 	for (int i = 0; i < count; i++) {
-		list[i].draw(hdc, Scale);
+		list[i].Draw(hdc, Scale);
 	}
 }
 
-bool FigureList::remove(unsigned int pos)
+bool CFigureList::Remove(unsigned int pos)
 {
 	for (int i = pos; i < count - 1; i++) {
 		list[i] = list[i + 1];
@@ -124,19 +124,19 @@ bool FigureList::remove(unsigned int pos)
 	return true;
 }
 
-void FigureList::clean()
+void CFigureList::Clean()
 {
 	for (int i = 0; i < count; i++) {
-		list[i] = Figure();
+		list[i] = CFigure();
 	}
 	count = 0;
 }
 
-unsigned FigureList::getLength()
+unsigned CFigureList::GetLength()
 {
 	return count;
 }
 
-FigureList::~FigureList()
+CFigureList::~CFigureList()
 {
 }

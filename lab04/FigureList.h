@@ -7,20 +7,20 @@
 
 using namespace std;
 
-struct Camera {
-	Point CameraPos = { 0 , 0 };
-	float Scale = 1.0;
+struct CCamera {
+	CPoint CameraPos = { 0 , 0 };
+	float Zoom = 1.0;
 };
 
-class FigureList
+class CFigureList
 {
 private:
-	Figure *list;
+	CFigure *list;
 	unsigned int count;
 public:
-	FigureList();
+	CFigureList();
 
-	void printList(wchar_t *path, float Scale, Point cameraPos);
+	void PrintList(wchar_t *wcPathP, float Zoom, CPoint CameraPos);
 
 	//
 	//	Point start, end;
@@ -29,19 +29,19 @@ public:
 	//	char *type = "";
 	//
 
-	Camera readData(wchar_t *path);
+	CCamera ReadData(wchar_t *wcPathP);
 
-	bool checkClick(Point mousePos) {
+	bool checkClick(CPoint mousePos) {
 		
 		return false;
 	}
 
-	unsigned getLength();
-	bool add(Figure figure);
-	void drawList(HDC hdc, float Scale);
-	bool remove(unsigned int pos); //	пока что не знаю что с этим делать
-	void clean();
+	unsigned GetLength();
+	bool Add(CFigure figure);
+	void DrawList(HDC hdc, float Scale);
+	bool Remove(unsigned int pos); //	пока что не знаю что с этим делать
+	void Clean();
 
-	~FigureList();
+	~CFigureList();
 };
 
